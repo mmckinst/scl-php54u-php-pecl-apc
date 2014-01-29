@@ -1,22 +1,23 @@
+%if 0%{?scl:1}
+%scl_package php-pecl-apc
+%endif
+
 %{!?__pecl:     %{expand: %%global __pecl     %{_bindir}/pecl}}
 %{!?pecl_phpdir: %{expand: %%global pecl_phpdir  %(%{__pecl} config-get php_dir  2> /dev/null || echo undefined)}}
 %{?!pecl_xmldir: %{expand: %%global pecl_xmldir %{pecl_phpdir}/.pkgxml}}
 
-%define php_extdir %(php-config --extension-dir 2>/dev/null || echo %{_libdir}/php4)                     
-%global php_zendabiver %((echo 0; php -i 2>/dev/null | sed -n 's/^PHP Extension => //p') | tail -1)
-%global php_version %((echo 0; php-config --version 2>/dev/null) | tail -1)
+%define php_extdir %(%{_bindir}/php-config --extension-dir 2>/dev/null || echo %{_libdir}/php4)                     
+%global php_zendabiver %((echo 0; %{_bindir}/php -i 2>/dev/null | sed -n 's/^PHP Extension => //p') | tail -1)
+%global php_version %((echo 0; %{_bindir}/php-config --version 2>/dev/null) | tail -1)
 %define pecl_name APC
 %{?!_without_php_ver_tag: %define php_ver_tag .php%{php_major_version}}
 
-%define real_name php-pecl-apc
-%define base_ver 3.1
-%define php_base php54
 #%%define patchver p1
 
 Summary:        APC caches and optimizes PHP intermediate code
-Name:           %{php_base}-pecl-apc
+Name:           %{?scl_prefix}php-pecl-apc
 Version:        3.1.13
-Release:        2.ius%{?dist}
+Release:        3.ius%{?dist}
 License:        PHP
 Group:          Development/Languages
 Vendor:         IUS Community Project 
@@ -25,17 +26,13 @@ Source:         http://pecl.php.net/get/APC-%{version}.tgz
 Source1:        apc.ini
 
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root
-Conflicts:      %{php_base}-mmcache %{php_base}-eaccelerator 
-Conflicts:      %{php_base}-zend-optimizer %{php_base}zend-optimizer
-Provides:       %{real_name} = %{version}
-Conflicts:      %{real_name} < %{base_ver}
-BuildRequires:  %{php_base}-devel %{php_base}-cli httpd-devel %{php_base}-pear 
-BuildRequires:  pcre-devel 
-# php54 now builds pcre from php source
-#Requires:       %{php_base} >= 5.4.6
+Conflicts:      %{?scl_prefix}php-mmcache %{?scl_prefix}php-eaccelerator
+Conflicts:      %{?scl_prefix}php-zend-optimizer %{?scl_prefix}phpzend-optimizer
+BuildRequires:  %{?scl_prefix}php-devel %{?scl_prefix}php-cli httpd-devel %{?scl_prefix}php-pear
+BuildRequires:  pcre-devel
 
-Requires:       %{php_base}-zend-abi = %{php_zendabiver}
-Provides:      php-pecl(%{pecl_name}) = %{version}
+Requires:       %{?scl_prefix}php-zend-abi = %{php_zendabiver}
+Provides:      	%{?scl_prefix}php-pecl(%{pecl_name}) = %{version}
 
 Requires(post): %{__pecl}
 Requires(postun): %{__pecl}
@@ -94,6 +91,10 @@ fi
 %{_includedir}/php/ext/apc/apc_serializer.h
 
 %changelog
+* Tue Jan 28 2014 Mark McKinstry <mmckinst@nexcess.net> - 3.1.13-3.ius
+- convert to scl style rpm
+- use bindir macro to we get the scl binaries
+
 * Thu Jul 25 2013 Ben Harper <ben.harper@rackspace.com> - 3.1.13-2.ius
 - removing Requires for php54:
   https://bugs.launchpad.net/ius/+bug/1204492
